@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { LoadingBlock, SystemMessage } from "@/components/Feedback";
 import { RetroButton } from "@/components/RetroButton";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -37,7 +38,7 @@ export default function StudentDetailPage() {
   }, [params.id]);
 
   return (
-    <TerminalShell title="Student Record" footer={<a href="/admin/students">Return to index</a>}>
+    <TerminalShell title="Student Record" footer={<Link href="/admin/students">Return to index</Link>}>
       {error ? <SystemMessage tone="bad">{error}</SystemMessage> : null}
       {!error && !data ? <LoadingBlock /> : null}
       {data ? (

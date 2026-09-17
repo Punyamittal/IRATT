@@ -4,14 +4,19 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { COUNTRIES } from "@/lib/countries";
 import { generateDisplayId } from "@/lib/format";
+import { getQrViewSession } from "@/lib/auth";
+import { clientIp, noStore, rateLimit, rateLimitResponse } from "@/lib/security";
 import { normalizePhone, registrationSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(`register:${clientIp(request)}`, 20, 15 * 60 * 1000);
+  if (!limited.ok) return rateLimitResponse(limited.retryAfter ?? 60);
+
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request body." }, noStore({ status: 400 }));
   }
 
   const parsed = registrationSchema.safeParse(body);
@@ -25,7 +30,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(
       { error: "Please correct the highlighted fields.", fieldErrors },
-      { status: 400 },
+      noStore({ status: 400 }),
     );
   }
 
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
         error: "Please correct the highlighted fields.",
         fieldErrors: { countryOfResidence: "Select a valid country from the list." },
       },
-      { status: 400 },
+      noStore({ status: 400 }),
     );
   }
 
@@ -51,7 +56,7 @@ export async function POST(request: Request) {
         error: "A registration with this registration number already exists.",
         fieldErrors: { registrationNumber: "A registration with this registration number already exists." },
       },
-      { status: 409 },
+      noStore({ status: 409 }),
     );
   }
 
@@ -73,18 +78,16 @@ export async function POST(request: Request) {
       },
       select: {
         displayId: true,
-        registrationToken: true,
-        name: true,
-        createdAt: true,
       },
     });
 
-    return NextResponse.json({
-      displayId: registration.displayId,
-      token: registration.registrationToken,
-      name: registration.name,
-      createdAt: registration.createdAt,
-    });
+    const view = await getQrViewSession();
+    view.displayId = registration.displayId;
+    view.token = token;
+    view.createdAt = Date.now();
+    await view.save();
+
+    return NextResponse.json({ displayId: registration.displayId }, noStore());
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(
@@ -92,10 +95,10 @@ export async function POST(request: Request) {
           error: "A registration with this registration number already exists.",
           fieldErrors: { registrationNumber: "A registration with this registration number already exists." },
         },
-        { status: 409 },
+        noStore({ status: 409 }),
       );
     }
-    console.error(error);
-    return NextResponse.json({ error: "CONNECTION ERROR — Please try again." }, { status: 500 });
+    console.error("register_failed");
+    return NextResponse.json({ error: "CONNECTION ERROR — Please try again." }, noStore({ status: 500 }));
   }
 }

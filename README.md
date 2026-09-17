@@ -1,40 +1,36 @@
 # International Student Registration System
 
-Retro terminal for student registration and administrator QR verification.
+Claymorphism student registration terminal with administrator QR verification.
 
 ## Stack
 
 - Next.js 15 (App Router) + TypeScript
 - Tailwind CSS
-- PostgreSQL + Prisma
+- **Supabase Postgres** + Prisma
 - Iron Session (httpOnly encrypted cookies)
 - Zod validation
 - QR generation (`qrcode.react`) and camera scanning (`@yudiel/react-qr-scanner`)
 
 ## Quick start
 
-1. Copy environment variables (already present as `.env` for local development):
+1. Create a free project at [supabase.com](https://supabase.com).
 
-```bash
-cp .env.example .env
-```
+2. In the dashboard open **Project Settings → Database**. Copy:
 
-2. Start PostgreSQL, run migrations, and seed:
+   - **Transaction pooler** URI (port `6543`) → `DATABASE_URL`
+   - **Session pooler** URI (port `5432`) → `DIRECT_URL`
+
+3. Put those values in `.env` (see `.env.example`). URL-encode any special characters in the database password.
+
+4. Install, migrate, and seed:
 
 ```bash
 npm install
 npm run setup
-```
-
-The Compose service maps Postgres to host port **5434** so it does not collide with an existing local database on 5432.
-
-3. Start the app:
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Docker is not required. Open [http://localhost:3000](http://localhost:3000).
 
 ### Default administrator (development)
 
@@ -68,7 +64,7 @@ Then re-seed, or delete `isDemo = true` rows before production.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run setup` | Docker Postgres + migrate + seed |
+| `npm run setup` | Apply Prisma migrations to Supabase and seed |
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:reset` | Reset database and re-seed |
 | `npm run build` | Production build |
@@ -79,5 +75,4 @@ Then re-seed, or delete `isDemo = true` rows before production.
 - Replace `SESSION_SECRET` with a long random value.
 - Do not ship default admin credentials.
 - Set `SEED_DEMO_DATA=false`.
-- Keep `DATABASE_URL` only on the server.
-# IRATT
+- Keep `DATABASE_URL` and `DIRECT_URL` only on the server.

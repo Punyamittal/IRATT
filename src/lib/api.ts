@@ -2,6 +2,7 @@ export async function apiFetch<T>(input: string, init?: RequestInit): Promise<T>
   let response: Response;
   try {
     response = await fetch(input, {
+      credentials: "same-origin",
       ...init,
       headers: {
         "Content-Type": "application/json",
@@ -39,4 +40,21 @@ export function getFieldErrors(error: unknown): Record<string, string> {
     return payload.fieldErrors ?? {};
   }
   return {};
+}
+
+export async function downloadExport(format: "csv" | "xlsx") {
+  const response = await fetch(`/api/admin/export?format=${format}`, {
+    method: "POST",
+    credentials: "same-origin",
+  });
+  if (!response.ok) {
+    throw new ApiError("CONNECTION ERROR — Please try again.", response.status);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `isrs-working-database.${format === "xlsx" ? "xlsx" : "csv"}`;
+  link.click();
+  URL.revokeObjectURL(url);
 }

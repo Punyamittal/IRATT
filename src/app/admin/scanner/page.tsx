@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
+import Link from "next/link";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Field, RetroInput } from "@/components/FormFields";
 import { RetroButton } from "@/components/RetroButton";
@@ -214,7 +215,7 @@ function ScannerFooter() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <span>Admin scanner</span>
-      <a href="/admin/dashboard">Return to command</a>
+      <Link href="/admin/dashboard">Return to command</Link>
     </div>
   );
 }

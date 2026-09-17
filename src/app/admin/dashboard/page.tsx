@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { RetroButton } from "@/components/RetroButton";
 import { LoadingBlock, SystemMessage } from "@/components/Feedback";
 import { TerminalShell } from "@/components/TerminalShell";
-import { apiFetch, ApiError } from "@/lib/api";
+import { apiFetch, ApiError, downloadExport } from "@/lib/api";
 import { formatClock } from "@/lib/format";
 
 type Stats = {
@@ -72,12 +72,12 @@ export default function AdminDashboardPage() {
               Search
             </Link>
             <div className="grid grid-cols-2 gap-4">
-              <a className="btn btn-large min-h-24" href="/api/admin/export?format=csv">
+              <button type="button" className="btn btn-large min-h-24" onClick={() => void downloadExport("csv")}>
                 Export CSV
-              </a>
-              <a className="btn btn-large min-h-24" href="/api/admin/export?format=xlsx">
+              </button>
+              <button type="button" className="btn btn-large min-h-24" onClick={() => void downloadExport("xlsx")}>
                 Export Excel
-              </a>
+              </button>
             </div>
           </div>
           <section className="bezel p-5 sm:p-6">

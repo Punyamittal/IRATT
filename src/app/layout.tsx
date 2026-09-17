@@ -17,6 +17,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "ISRS // International Student Registration System",
   description: "Student registration and administrator QR verification console.",
+  referrer: "no-referrer",
 };
 
 export const viewport: Viewport = {

@@ -1,5 +1,6 @@
 import { jsonError, requireAdminSession, unauthorized } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { noStore } from "@/lib/security";
 import { verifySchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -36,8 +37,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const working = await prisma.$transaction(async (tx) => {
-      const created = await tx.workingStudent.create({
+    await prisma.$transaction(async (tx) => {
+      await tx.workingStudent.create({
         data: {
           registrationId: registration.id,
           name: registration.name,
@@ -62,22 +63,19 @@ export async function POST(request: Request) {
           details: `Added ${registration.displayId} to working database`,
         },
       });
-
-      return created;
     });
 
     return NextResponse.json({
       ok: true,
       message: "Student successfully added to working database.",
-      workingStudentId: working.id,
-    });
+    }, noStore());
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return jsonError("This registration has already been added to the working database.", 409, {
         code: "ALREADY_ADDED",
       });
     }
-    console.error(error);
+    console.error("verify_failed");
     return jsonError("CONNECTION ERROR — Please try again.", 500);
   }
 }

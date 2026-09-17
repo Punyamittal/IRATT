@@ -1,10 +1,11 @@
 import { jsonError, requireAdminSession, unauthorized } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { categoryLabel, formatDateTime, statusLabel } from "@/lib/format";
+import { sanitizeSpreadsheetCell } from "@/lib/security";
 import ExcelJS from "exceljs";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+async function handleExport(request: NextRequest) {
   const session = await requireAdminSession();
   if (!session?.adminId) return unauthorized();
 
@@ -53,7 +54,15 @@ export async function GET(request: NextRequest) {
       { header: "Added By", key: "addedBy", width: 18 },
       { header: "Registration ID", key: "displayId", width: 16 },
     ];
-    sheet.addRows(records);
+    sheet.addRows(
+      records.map((row) => {
+        const guarded: Record<string, string> = {};
+        for (const [key, value] of Object.entries(row)) {
+          guarded[key] = /^[=+\-@|]/.test(value) ? `'${value}` : value;
+        }
+        return guarded;
+      }),
+    );
     sheet.getRow(1).font = { bold: true };
 
     const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
@@ -61,6 +70,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": 'attachment; filename="isrs-working-database.xlsx"',
+        "Cache-Control": "no-store",
       },
     });
   }
@@ -91,7 +101,7 @@ export async function GET(request: NextRequest) {
         row.addedBy,
         row.displayId,
       ]
-        .map(csvCell)
+        .map(sanitizeSpreadsheetCell)
         .join(","),
     ),
   ].join("\r\n");
@@ -100,13 +110,15 @@ export async function GET(request: NextRequest) {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": 'attachment; filename="isrs-working-database.csv"',
+      "Cache-Control": "no-store",
     },
   });
 }
 
-function csvCell(value: string) {
-  if (/[",\r\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
+export async function POST(request: NextRequest) {
+  return handleExport(request);
+}
+
+export async function GET() {
+  return jsonError("Use POST to export.", 405);
 }

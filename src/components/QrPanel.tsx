@@ -1,26 +1,22 @@
 "use client";
 
-import { QRCodeCanvas } from "qrcode.react";
-import { useRef } from "react";
 import { RetroButton } from "@/components/RetroButton";
-import { buildQrPayload } from "@/lib/format";
 
 type QrPanelProps = {
-  token: string;
   displayId: string;
 };
 
-export function QrPanel({ token, displayId }: QrPanelProps) {
-  const canvasWrap = useRef<HTMLDivElement>(null);
-  const payload = buildQrPayload(token);
-
-  function download() {
-    const canvas = canvasWrap.current?.querySelector("canvas");
-    if (!canvas) return;
+export function QrPanel({ displayId }: QrPanelProps) {
+  async function download() {
+    const response = await fetch("/api/registration/qr", { credentials: "same-origin" });
+    if (!response.ok) return;
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.download = `${displayId}-qr.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.href = url;
     link.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -30,20 +26,19 @@ export function QrPanel({ token, displayId }: QrPanelProps) {
       </p>
       <p className="mt-2 font-mono text-xl font-bold tracking-[0.12em] text-[var(--amber)]">{displayId}</p>
       <div
-        ref={canvasWrap}
         className="mx-auto mt-6 inline-block rounded-[28px] bg-white p-4"
         style={{
           boxShadow:
             "inset 4px 5px 10px rgba(138,108,74,0.12), 8px 10px 18px rgba(138,108,74,0.18), -4px -5px 12px rgba(255,250,243,0.9)",
         }}
       >
-        <QRCodeCanvas
-          value={payload}
-          size={280}
-          level="H"
-          marginSize={2}
-          bgColor="#ffffff"
-          fgColor="#3d3228"
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/api/registration/qr"
+          alt="Registration QR code"
+          width={280}
+          height={280}
+          className="h-[280px] w-[280px]"
         />
       </div>
       <p className="mt-5 text-base leading-7 text-[var(--text)]">
@@ -55,7 +50,7 @@ export function QrPanel({ token, displayId }: QrPanelProps) {
         Payload contains token only
       </p>
       <div className="no-print mt-6 flex flex-col gap-3 sm:flex-row">
-        <RetroButton className="flex-1" onClick={download}>
+        <RetroButton className="flex-1" onClick={() => void download()}>
           Download QR
         </RetroButton>
         <RetroButton className="flex-1" variant="amber" onClick={() => window.print()}>

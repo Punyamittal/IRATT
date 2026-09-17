@@ -9,6 +9,10 @@ import { LoadingBlock, SystemMessage } from "@/components/Feedback";
 import { TerminalShell } from "@/components/TerminalShell";
 import { apiFetch, ApiError } from "@/lib/api";
 
+function isSafeAdminPath(path: string) {
+  return path.startsWith("/admin") && !path.startsWith("//") && !path.includes("\\") && !path.includes("://");
+}
+
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,7 +31,7 @@ function LoginInner() {
         method: "POST",
         body: JSON.stringify({ username, password }),
       });
-      router.push(from.startsWith("/admin") ? from : "/admin/dashboard");
+      router.push(isSafeAdminPath(from) ? from : "/admin/dashboard");
       router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "CONNECTION ERROR — Please try again.");

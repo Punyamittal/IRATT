@@ -1,11 +1,15 @@
 import { jsonError, requireAdminSession, unauthorized } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { parseQrToken, scanSchema } from "@/lib/validations";
+import { clientIp, noStore, rateLimit, rateLimitResponse } from "@/lib/security";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const session = await requireAdminSession();
   if (!session?.adminId) return unauthorized();
+
+  const limited = rateLimit(`scan:${session.adminId}:${clientIp(request)}`, 40, 15 * 60 * 1000);
+  if (!limited.ok) return rateLimitResponse(limited.retryAfter ?? 60);
 
   let body: unknown;
   try {
@@ -63,5 +67,5 @@ export async function POST(request: Request) {
       createdAt: registration.createdAt,
       isDemo: registration.isDemo,
     },
-  });
+  }, noStore());
 }

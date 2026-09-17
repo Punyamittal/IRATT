@@ -36,9 +36,7 @@ export async function GET() {
         id: item.id,
         action: item.action,
         displayId: item.registration?.displayId ?? "SYSTEM",
-        registrationNumber: item.registration?.registrationNumber ?? null,
         createdAt: item.createdAt,
-        details: item.details,
       })),
     });
   } catch (error) {

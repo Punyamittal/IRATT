@@ -7,15 +7,12 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
+    "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
-    "setup": "docker compose up -d && node scripts/wait-for-db.mjs && prisma migrate deploy && prisma db seed",
+    "setup": "prisma migrate deploy && prisma db seed",
     "postinstall": "prisma generate"
   },
   "prisma": {

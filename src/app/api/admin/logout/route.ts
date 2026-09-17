@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { noStore } from "@/lib/security";
 
 export async function POST() {
   const session = await getSession();
@@ -14,5 +15,5 @@ export async function POST() {
     });
   }
   session.destroy();
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true }, noStore());
 }

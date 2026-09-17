@@ -9,7 +9,7 @@ import { RetroButton } from "@/components/RetroButton";
 import { EmptyState, LoadingBlock, SystemMessage } from "@/components/Feedback";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TerminalShell } from "@/components/TerminalShell";
-import { apiFetch, ApiError } from "@/lib/api";
+import { apiFetch, ApiError, downloadExport } from "@/lib/api";
 import { categoryLabel, formatDateTime } from "@/lib/format";
 
 type StudentRow = {
@@ -90,8 +90,12 @@ function StudentsInner() {
         <button className={`btn ${scope === "all" ? "btn-amber" : ""}`} onClick={() => { setScope("all"); setPage(1); }}>
           All Registrations
         </button>
-        <a className="btn ml-auto" href="/api/admin/export?format=csv">Export CSV</a>
-        <a className="btn" href="/api/admin/export?format=xlsx">Export Excel</a>
+        <button type="button" className="btn ml-auto" onClick={() => void downloadExport("csv")}>
+          Export CSV
+        </button>
+        <button type="button" className="btn" onClick={() => void downloadExport("xlsx")}>
+          Export Excel
+        </button>
       </div>
 
       <form
@@ -200,7 +204,7 @@ function StudentsFooter() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <span>Admin index</span>
-      <a href="/admin/dashboard">Return to command</a>
+      <Link href="/admin/dashboard">Return to command</Link>
     </div>
   );
 }

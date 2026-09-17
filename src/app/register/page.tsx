@@ -46,11 +46,11 @@ export default function RegisterPage() {
     setBanner(null);
     setBusy(true);
     try {
-      const result = await apiFetch<{ token: string; displayId: string }>("/api/register", {
+      await apiFetch<{ displayId: string }>("/api/register", {
         method: "POST",
         body: JSON.stringify(form),
       });
-      router.push(`/register/success?token=${encodeURIComponent(result.token)}`);
+      router.push("/register/success");
     } catch (error) {
       setErrors(getFieldErrors(error));
       setBanner(error instanceof ApiError ? error.message : "CONNECTION ERROR — Please try again.");
