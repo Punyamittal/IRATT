@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: isrs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: isrs
+      POSTGRES_PASSWORD: isrs_dev_password
+      POSTGRES_DB: isrs
+    ports:
+      - "5434:5432"
+    volumes:
+      - isrs_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U isrs -d isrs"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  isrs_pgdata:

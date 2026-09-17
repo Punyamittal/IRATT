@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  OCI
+  NRI
+  FOREIGN_STUDENT
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  SCANNED
+  VERIFIED
+  ADDED_TO_WORKING_DB
+}
+
+model Admin {
+  id             String           @id @default(cuid())
+  username       String           @unique
+  email          String?          @unique
+  passwordHash   String           @map("password_hash")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  lastLogin      DateTime?        @map("last_login")
+  workingStudents WorkingStudent[]
+  auditLogs      AuditLog[]
+
+  @@map("admins")
+}
+
+model Registration {
+  id                 String              @id @default(cuid())
+  displayId          String              @unique @map("display_id")
+  registrationToken  String              @unique @map("registration_token")
+  name               String
+  registrationNumber String              @unique @map("registration_number")
+  category           Category
+  countryOfResidence String              @map("country_of_residence")
+  phoneNumber        String              @map("phone_number")
+  status             RegistrationStatus  @default(REGISTERED)
+  isDemo             Boolean             @default(false) @map("is_demo")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  workingStudent     WorkingStudent?
+  auditLogs          AuditLog[]
+
+  @@index([status])
+  @@index([category])
+  @@index([countryOfResidence])
+  @@index([createdAt])
+  @@map("registrations")
+}
+
+model WorkingStudent {
+  id                 String       @id @default(cuid())
+  registrationId     String       @unique @map("registration_id")
+  registration       Registration @relation(fields: [registrationId], references: [id], onDelete: Restrict)
+  name               String
+  registrationNumber String       @map("registration_number")
+  category           Category
+  countryOfResidence String       @map("country_of_residence")
+  phoneNumber        String       @map("phone_number")
+  addedByAdminId     String       @map("added_by_admin")
+  addedByAdmin       Admin        @relation(fields: [addedByAdminId], references: [id], onDelete: Restrict)
+  addedAt            DateTime     @default(now()) @map("added_at")
+
+  @@index([registrationNumber])
+  @@index([category])
+  @@index([countryOfResidence])
+  @@index([addedAt])
+  @@map("working_students")
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  action         String
+  adminId        String        @map("admin_id")
+  admin          Admin         @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  registrationId String?       @map("registration_id")
+  registration   Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  details        String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([adminId])
+  @@map("audit_logs")
+}
