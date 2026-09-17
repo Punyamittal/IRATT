@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
-import { getSessionOptions, type SessionData } from "@/lib/auth";
+import { getSessionOptions, type SessionData } from "@/lib/session";
 import { applySecurityHeaders, rejectCrossOrigin, sameOrigin } from "@/lib/security";
 
 export async function middleware(request: NextRequest) {

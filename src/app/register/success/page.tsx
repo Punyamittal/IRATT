@@ -3,9 +3,13 @@ import { SystemMessage } from "@/components/Feedback";
 import { TerminalShell } from "@/components/TerminalShell";
 import { RetroButton } from "@/components/RetroButton";
 import { getQrViewSession } from "@/lib/auth";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
-export const robots = { index: false, follow: false };
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function SuccessPage() {
   const view = await getQrViewSession();
