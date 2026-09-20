@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import Link from "next/link";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Field, RetroInput } from "@/components/FormFields";
 import { RetroButton } from "@/components/RetroButton";
 import { LoadingBlock, SystemMessage } from "@/components/Feedback";
@@ -13,6 +12,8 @@ import { categoryLabel } from "@/lib/format";
 
 type ScanResult = {
   alreadyAdded: boolean;
+  added?: boolean;
+  message?: string;
   registration: {
     id: string;
     displayId: string;
@@ -32,8 +33,6 @@ export default function ScannerPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: "ok" | "warn" | "bad"; text: string } | null>(null);
   const [found, setFound] = useState<ScanResult | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
   const [paused, setPaused] = useState(false);
   const lock = useRef(false);
 
@@ -52,7 +51,12 @@ export default function ScannerPage() {
       if (result.alreadyAdded) {
         setMessage({
           tone: "warn",
-          text: "ALREADY VERIFIED — This student is already present in the working database.",
+          text: result.message || "ALREADY VERIFIED — This student is already present in the working database.",
+        });
+      } else {
+        setMessage({
+          tone: "ok",
+          text: result.message || "Student successfully added to working database.",
         });
       }
     } catch (error) {
@@ -65,32 +69,6 @@ export default function ScannerPage() {
       setBusy(false);
     }
   }, []);
-
-  async function addToWorking() {
-    if (!found) return;
-    setAdding(true);
-    try {
-      const result = await apiFetch<{ message: string }>("/api/admin/verify", {
-        method: "POST",
-        body: JSON.stringify({ registrationId: found.registration.id }),
-      });
-      setMessage({ tone: "ok", text: result.message });
-      setFound({
-        ...found,
-        alreadyAdded: true,
-        registration: { ...found.registration, status: "ADDED_TO_WORKING_DB" },
-      });
-      setConfirmOpen(false);
-    } catch (error) {
-      setMessage({
-        tone: "warn",
-        text: error instanceof ApiError ? error.message : "CONNECTION ERROR — Please try again.",
-      });
-      setConfirmOpen(false);
-    } finally {
-      setAdding(false);
-    }
-  }
 
   function reset() {
     lock.current = false;
@@ -105,7 +83,7 @@ export default function ScannerPage() {
       <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="bezel p-5 sm:p-6">
           <p className="mb-4 text-xs font-extrabold tracking-[0.12em] uppercase text-[var(--muted)]">
-            Camera input · desktop / mobile / laptop
+            Camera input · scan adds instantly
           </p>
           <div className="overflow-hidden rounded-[24px] bg-[#2d261f]">
             <Scanner
@@ -126,7 +104,7 @@ export default function ScannerPage() {
           {cameraError ? <p className="mt-3 text-sm font-bold text-[var(--amber)]">{cameraError}</p> : null}
           {busy ? (
             <div className="mt-3">
-              <LoadingBlock label="Looking up token..." />
+              <LoadingBlock label="Scanning and adding..." />
             </div>
           ) : null}
           <form
@@ -146,7 +124,7 @@ export default function ScannerPage() {
               />
             </Field>
             <RetroButton type="submit" disabled={busy}>
-              Lookup Token
+              Scan Token
             </RetroButton>
           </form>
         </section>
@@ -156,7 +134,7 @@ export default function ScannerPage() {
           {found ? (
             <div className="bezel p-6">
               <p className="text-xs font-extrabold tracking-[0.14em] uppercase text-[var(--phosphor-bright)]">
-                Registration found
+                {found.alreadyAdded ? "Already in working database" : "Added to working database"}
               </p>
               {found.registration.isDemo ? (
                 <p className="mt-2 text-xs font-extrabold uppercase text-[var(--amber)]">Demo record</p>
@@ -169,35 +147,20 @@ export default function ScannerPage() {
                 <Row label="COUNTRY OF RESIDENCE" value={found.registration.countryOfResidence} />
                 <Row label="PHONE" value={found.registration.phoneNumber} />
               </dl>
-              <div className="mt-6 flex flex-col gap-3">
-                <RetroButton
-                  variant="amber"
-                  large
-                  disabled={found.alreadyAdded}
-                  onClick={() => setConfirmOpen(true)}
-                >
-                  Add to Working Database
+              <div className="mt-6">
+                <RetroButton variant="amber" large onClick={reset}>
+                  Scan Next
                 </RetroButton>
-                <RetroButton onClick={reset}>Cancel / Scan Next</RetroButton>
               </div>
             </div>
           ) : (
             <div className="bezel p-6 text-base leading-7 text-[var(--muted)]">
-              Align the student QR code within the frame. The token is validated on the server. Personal data is never
-              trusted from the QR payload itself.
+              Align the student QR code within the frame. A valid scan is validated on the server and added to the
+              working database immediately. Duplicates are blocked automatically.
             </div>
           )}
         </section>
       </div>
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Commit to working database?"
-        body="This copies the verified registration into the working student table and cannot create a duplicate."
-        confirmLabel="ADD RECORD"
-        onConfirm={addToWorking}
-        onCancel={() => setConfirmOpen(false)}
-        busy={adding}
-      />
     </TerminalShell>
   );
 }
