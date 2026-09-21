@@ -60,7 +60,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <TerminalShell title="Student Registration Form">
+    <TerminalShell title="IRATT Student Registration Form">
       <div className="mx-auto max-w-2xl">
         {banner ? (
           <div className="mb-4">
@@ -68,6 +68,9 @@ export default function RegisterPage() {
           </div>
         ) : null}
         <form onSubmit={onSubmit} className="bezel space-y-5 p-6 sm:p-8">
+          <p className="mb-2 text-sm font-extrabold text-[var(--text)]">
+            IRATT registration for OCI, NRI, and Foreign Students
+          </p>
           <p className="mb-4 text-sm font-extrabold tracking-[0.08em] uppercase text-[var(--muted)]">
             All fields required
           </p>
